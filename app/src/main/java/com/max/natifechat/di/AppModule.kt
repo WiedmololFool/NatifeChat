@@ -1,5 +1,6 @@
 package com.max.natifechat.di
 
+import com.max.natifechat.presentation.chat.ChatViewModel
 import com.max.natifechat.presentation.login.LoginViewModel
 import com.max.natifechat.presentation.usersList.UsersListViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -13,5 +14,9 @@ val appModule = module {
 
     viewModel {
         UsersListViewModel(serverRepository = get(), userStorage = get())
+    }
+
+    viewModel { (receiverId: String) ->
+        ChatViewModel(serverRepository = get(), receiverId = receiverId)
     }
 }

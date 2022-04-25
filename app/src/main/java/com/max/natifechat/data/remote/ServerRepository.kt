@@ -11,7 +11,7 @@ interface ServerRepository {
 
     suspend fun getUsers(): List<User>
 
-    suspend fun sendMessage(id: String, receiver: String, message: String)
+    suspend fun sendMessage(receiver: String, message: String)
 
     suspend fun newMessage(): MessageDto
 

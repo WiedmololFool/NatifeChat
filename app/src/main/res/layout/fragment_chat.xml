@@ -8,7 +8,7 @@
     android:padding="8dp">
 
  <TextView
-     android:id="@+id/userName"
+     android:id="@+id/receiverName"
      android:layout_width="0dp"
      android:layout_height="wrap_content"
      android:textAppearance="@style/TextAppearance.AppCompat.Large"
@@ -25,7 +25,7 @@
      app:layout_constraintBottom_toTopOf="@+id/inputField"
      app:layout_constraintEnd_toEndOf="parent"
      app:layout_constraintStart_toStartOf="parent"
-     app:layout_constraintTop_toBottomOf="@id/userName"
+     app:layout_constraintTop_toBottomOf="@id/receiverName"
      tools:listitem="@layout/list_message_to_user_item"/>
 
  <com.google.android.material.floatingactionbutton.FloatingActionButton

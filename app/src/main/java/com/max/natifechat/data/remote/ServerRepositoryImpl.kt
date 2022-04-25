@@ -1,8 +1,8 @@
 package com.max.natifechat.data.remote
 
 import android.util.Log
-import com.google.gson.Gson
 import com.max.natifechat.Constants
+import com.max.natifechat.getPayloadClass
 import kotlinx.coroutines.*
 import model.*
 import org.json.JSONObject
@@ -14,23 +14,10 @@ import java.net.Socket
 
 class ServerRepositoryImpl : ServerRepository {
 
-    private val gson = Gson()
-//
-//    private val socketHandler: SocketHandler by lazy {
-//        Log.e(Constants.TAG, "Socket handler init")
-//        SocketHandler(Socket(getServerIp(), Constants.TCP_PORT))
-//    }
+    private lateinit var socketHandler: SocketHandler
+    private lateinit var userId: String
 
-    private var socketHandler: SocketHandler? = null
-
-    private val userId by lazy {
-        val baseDto = socketHandler?.read()
-        val connectedDto = baseDto?.getPayloadClass() as ConnectedDto
-        Log.e(Constants.TAG, "response Id = ${connectedDto.id}")
-        connectedDto.id
-    }
-
-    var job: Job? = null
+    private var job: Job? = null
 
     override fun getServerIp(): String {
         try {
@@ -56,13 +43,25 @@ class ServerRepositoryImpl : ServerRepository {
     override suspend fun connectToServer(username: String): Boolean {
         socketHandler = SocketHandler(Socket(getServerIp(), Constants.TCP_PORT))
         try {
-            socketHandler?.apply {
+            socketHandler.apply {
+                val baseDto = read()
+                val connectedDto = baseDto.getPayloadClass() as ConnectedDto
+                userId = connectedDto.id
+                Log.e(Constants.TAG, "response Id = $userId")
                 send(BaseDto.Action.CONNECT, ConnectDto(userId, username))
                 job = CoroutineScope(Dispatchers.IO).launch {
                     while (true) {
                         delay(5000)
                         send(BaseDto.Action.PING, ConnectedDto(userId))
                         //Log PONG
+//                        socketHandler.setOnClickListener {
+//                            when (it.action) {
+//                                BaseDto.Action.PING -> {
+//                                    Log.e(Constants.TAG, read().toString())
+//                                }
+//                                else -> Log.e(Constants.TAG, "unknown action")
+//                            }
+//                        }
                         Log.e(Constants.TAG, read().toString())
                     }
                 }
@@ -70,30 +69,35 @@ class ServerRepositoryImpl : ServerRepository {
                     Constants.TAG,
                     "ServerRepositoryImpl connection status ${serverIsConnected()}"
                 )
-                return getConnectionStatus()
             }
         } catch (e: Exception) {
             Log.e(Constants.TAG, e.message.toString())
-            return false
         }
         return getConnectionStatus()
     }
 
     override suspend fun getUsers(): List<User> {
-        var userList = listOf<User>()
-        socketHandler?.apply {
+
+        socketHandler.apply {
             send(BaseDto.Action.GET_USERS, GetUsersDto(userId))
-            userList = (read().getPayloadClass() as UsersReceivedDto).users.apply {
+
+            return (read().getPayloadClass() as UsersReceivedDto).users.apply {
                 toMutableList().removeAll {
                     it.id == userId
                 }
             }
         }
-        return userList
     }
 
-    override suspend fun sendMessage(id: String, receiver: String, message: String) {
-        TODO("Not yet implemented")
+    override suspend fun sendMessage(receiver: String, message: String) {
+        Log.e(Constants.TAG, "repository send message $message")
+        socketHandler.send(
+            BaseDto.Action.SEND_MESSAGE, SendMessageDto(
+                id = userId,
+                receiver = receiver,
+                message = message
+            )
+        )
     }
 
     override suspend fun newMessage(): MessageDto {
@@ -102,7 +106,7 @@ class ServerRepositoryImpl : ServerRepository {
 
     override suspend fun disconnect(): Boolean {
         job?.cancel()
-        socketHandler?.apply {
+        socketHandler.apply {
             send(BaseDto.Action.DISCONNECT, DisconnectDto(userId, 404))
             disconnect()
         }
@@ -110,7 +114,7 @@ class ServerRepositoryImpl : ServerRepository {
     }
 
     override fun getConnectionStatus(): Boolean {
-        return socketHandler?.serverIsConnected() ?: false
+        return socketHandler.serverIsConnected()
     }
 
     override fun getLoggedUserId(): String {
@@ -118,26 +122,6 @@ class ServerRepositoryImpl : ServerRepository {
     }
 
 
-    private fun BaseDto.getPayloadClass(): Payload {
 
-        when (this.action) {
-            BaseDto.Action.PONG -> {
-                return gson.fromJson(this.payload, PongDto::class.java)
-            }
-            BaseDto.Action.CONNECTED -> {
-                return gson.fromJson(this.payload, ConnectedDto::class.java)
-            }
-            BaseDto.Action.NEW_MESSAGE -> {
-                return gson.fromJson(this.payload, MessageDto::class.java)
-            }
-            BaseDto.Action.USERS_RECEIVED -> {
-                return gson.fromJson(this.payload, UsersReceivedDto::class.java)
-            }
-            BaseDto.Action.DISCONNECT -> {
-
-            }
-            else -> Log.e(Constants.TAG, "unknown action: ${this.action}")
-        }
-        return Error("Unknown action")
-    }
 }
+

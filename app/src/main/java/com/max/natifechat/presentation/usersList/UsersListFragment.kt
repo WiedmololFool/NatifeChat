@@ -11,7 +11,6 @@ import com.max.natifechat.Constants
 import com.max.natifechat.databinding.FragmentUsersListBinding
 import com.max.natifechat.presentation.BaseFragment
 import com.max.natifechat.presentation.chat.ChatFragment
-import com.max.natifechat.presentation.login.LoginFragment
 import com.max.natifechat.presentation.login.StartFragment
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
@@ -25,7 +24,7 @@ class UsersListFragment : BaseFragment() {
     var job: Job? = null
     private val adapter by lazy {
         UsersListAdapter(onItemClickListener = {
-            changeFragment(ChatFragment.newInstance(userId = it.id), true)
+            changeFragment(ChatFragment.newInstance(receiverId = it.id), true)
         })
     }
 
@@ -58,14 +57,14 @@ class UsersListFragment : BaseFragment() {
                 Log.e(Constants.TAG, users.toString())
             }
         }
-//        job = lifecycleScope.launch {
-//            withContext(Dispatchers.IO) {
-//                while (true) {
-//                    delay(1000)
-//                    viewModel.loadUsers()
-//                }
-//            }
-//        }
+        job = lifecycleScope.launch {
+            withContext(Dispatchers.IO) {
+                while (true) {
+                    delay(1000)
+                    viewModel.loadUsers()
+                }
+            }
+        }
     }
 
 
