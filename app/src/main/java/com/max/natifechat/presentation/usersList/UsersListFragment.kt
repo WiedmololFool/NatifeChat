@@ -21,7 +21,7 @@ class UsersListFragment : BaseFragment() {
 
     private var binding: FragmentUsersListBinding? = null
     private val viewModel by viewModel<UsersListViewModel>()
-    var job: Job? = null
+    var loadUsersJob: Job? = null
     private val adapter by lazy {
         UsersListAdapter(onItemClickListener = {
             changeFragment(ChatFragment.newInstance(receiverId = it.id), true)
@@ -44,7 +44,7 @@ class UsersListFragment : BaseFragment() {
             rcView.layoutManager = LinearLayoutManager(requireContext())
             btnLogout.setOnClickListener {
                 changeFragment(StartFragment.newInstance(), false)
-                job?.cancel()
+                loadUsersJob?.cancel()
                 CoroutineScope(Dispatchers.IO).launch {
                     viewModel.logout()
                 }
@@ -57,7 +57,7 @@ class UsersListFragment : BaseFragment() {
                 Log.e(Constants.TAG, users.toString())
             }
         }
-        job = lifecycleScope.launch {
+        loadUsersJob = lifecycleScope.launch {
             withContext(Dispatchers.IO) {
                 while (true) {
                     delay(1000)

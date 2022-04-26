@@ -25,11 +25,11 @@ class LoginFragment : BaseLoginFragment() {
         binding?.apply {
             loginButton.setOnClickListener {
                 login(username = usernameField.text.toString(), {
-                        showToast("Connection success")
-                        changeFragment(UsersListFragment.newInstance(), false)
-                    }, {
-                        showToast("Connection failed")
-                    })
+                    showToast("Connection success")
+                    changeFragment(UsersListFragment.newInstance(), false)
+                }, {
+                    showToast("Connection failed")
+                })
             }
         }
     }
@@ -43,11 +43,7 @@ class LoginFragment : BaseLoginFragment() {
     companion object {
 
         fun newInstance(): LoginFragment {
-            return LoginFragment().apply {
-                arguments = Bundle().apply {
-//                    putString(ARG_PARAM1, param1)
-                }
-            }
+            return LoginFragment()
         }
     }
 }

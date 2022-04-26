@@ -44,3 +44,14 @@ fun BaseDto.getPayloadClass(): Payload {
     }
     return Error("Unknown action")
 }
+
+fun log(input: String) {
+    var retVal = ""
+    val trace = Throwable().stackTrace
+    if (trace.size >= 2) {
+        val index = trace[1].className.lastIndexOf(".") + 1
+        retVal = (trace[1].className.substring(index) + "." + trace[1].methodName
+                + "()")
+    }
+    Log.e("${Constants.TAG} $retVal", input)
+}

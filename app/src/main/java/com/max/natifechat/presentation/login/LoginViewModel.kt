@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import com.max.natifechat.Constants
 import com.max.natifechat.data.local.UserStorage
 import com.max.natifechat.data.remote.ServerRepository
+import com.max.natifechat.log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,8 +23,8 @@ class LoginViewModel(
         serverRepository.apply {
             val connection = ConnectionStatus(connectToServer(username))
             _connectionStatus.value = connection
-            Log.e(Constants.TAG, _connectionStatus.value.toString())
-            if (connection.status){
+            log(_connectionStatus.value.toString())
+            if (connection.status) {
                 userStorage.save(User(id = getLoggedUserId(), name = username))
             }
         }

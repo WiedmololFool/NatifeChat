@@ -1,8 +1,9 @@
 package com.max.natifechat.data.remote
 
 import android.util.Log
+import com.google.gson.Gson
 import com.max.natifechat.Constants
-import com.max.natifechat.getPayloadClass
+import com.max.natifechat.log
 import kotlinx.coroutines.*
 import model.*
 import org.json.JSONObject
@@ -16,8 +17,12 @@ class ServerRepositoryImpl : ServerRepository {
 
     private lateinit var socketHandler: SocketHandler
     private lateinit var userId: String
+    private val gson = Gson()
+    private var pongJob: Job? = null
+    private var connectJob: Job? = null
+    private var usersList = mutableListOf<User>()
+    private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
-    private var job: Job? = null
 
     override fun getServerIp(): String {
         try {
@@ -41,52 +46,81 @@ class ServerRepositoryImpl : ServerRepository {
     }
 
     override suspend fun connectToServer(username: String): Boolean {
-        socketHandler = SocketHandler(Socket(getServerIp(), Constants.TCP_PORT))
-        try {
-            socketHandler.apply {
-                val baseDto = read()
-                val connectedDto = baseDto.getPayloadClass() as ConnectedDto
-                userId = connectedDto.id
-                Log.e(Constants.TAG, "response Id = $userId")
-                send(BaseDto.Action.CONNECT, ConnectDto(userId, username))
-                job = CoroutineScope(Dispatchers.IO).launch {
-                    while (true) {
-                        delay(5000)
-                        send(BaseDto.Action.PING, ConnectedDto(userId))
-                        //Log PONG
-//                        socketHandler.setOnClickListener {
-//                            when (it.action) {
-//                                BaseDto.Action.PING -> {
-//                                    Log.e(Constants.TAG, read().toString())
-//                                }
-//                                else -> Log.e(Constants.TAG, "unknown action")
-//                            }
-//                        }
-                        Log.e(Constants.TAG, read().toString())
-                    }
-                }
-                Log.e(
-                    Constants.TAG,
-                    "ServerRepositoryImpl connection status ${serverIsConnected()}"
-                )
+        socketHandler = SocketHandler(Socket(getServerIp(), Constants.TCP_PORT), coroutineScope)
+        connectJob = coroutineScope.launch(Dispatchers.IO) {
+            while (true) {
+                socketHandler.setListener(createClientListener(username = username))
+                socketHandler.loop()
             }
-        } catch (e: Exception) {
-            Log.e(Constants.TAG, e.message.toString())
         }
+
+        //Проверка для того, чтобы ViewModel
+        while (!::userId.isInitialized) {
+            log("userId is not initialized yet")
+        }
+        log("userId is initialized")
         return getConnectionStatus()
     }
 
-    override suspend fun getUsers(): List<User> {
+    private fun createClientListener(username: String): SocketHandler.SocketListener =
+        object : SocketHandler.SocketListener {
+            override fun onNewMessage(message: String) {
+                try {
+                    val dto = gson.fromJson(message, BaseDto::class.java)
+                    when (dto.action) {
+                        BaseDto.Action.CONNECTED -> {
+                            handleConnected(dto.payload, username)
+                        }
+                        BaseDto.Action.PONG -> {
+                            handlePong(dto.payload)
+                        }
+                        BaseDto.Action.NEW_MESSAGE -> {
 
-        socketHandler.apply {
-            send(BaseDto.Action.GET_USERS, GetUsersDto(userId))
-
-            return (read().getPayloadClass() as UsersReceivedDto).users.apply {
-                toMutableList().removeAll {
-                    it.id == userId
+                        }
+                        BaseDto.Action.USERS_RECEIVED -> {
+                            handleUsersReceived(dto.payload)
+                        }
+                        else -> Log.e(Constants.TAG, "unknown action: $message")
+                    }
+                } catch (e: Exception) {
+                    Log.e(Constants.TAG, "error handling message: ${e.message}")
                 }
             }
         }
+
+    private fun handleConnected(payload: String, username: String) {
+        val connectedDto = gson.fromJson(payload, ConnectDto::class.java)
+        userId = connectedDto.id
+        socketHandler.send(BaseDto.Action.CONNECT, ConnectDto(userId, username))
+        log("response Id = $userId")
+        socketHandler.send(BaseDto.Action.PING, PingDto(userId))
+
+    }
+
+    private fun handlePong(payload: String) {
+        val pongDto = gson.fromJson(payload, PongDto::class.java)
+        log(pongDto.toString())
+        coroutineScope.launch(Dispatchers.Default) {
+            delay(1000)
+            log("send ping")
+            socketHandler.send(BaseDto.Action.PING, PingDto(userId))
+        }
+    }
+
+
+    private fun handleUsersReceived(payload: String) {
+        val userReceivedDto = gson.fromJson(payload, UsersReceivedDto::class.java)
+        usersList = userReceivedDto.users.toMutableList().apply {
+            removeAll {
+                it.id == userId
+            }
+        }
+    }
+
+    override suspend fun getUsers(): List<User> {
+        socketHandler.send(BaseDto.Action.GET_USERS, GetUsersDto(userId))
+        log(usersList.toList().toString())
+        return usersList.toList()
     }
 
     override suspend fun sendMessage(receiver: String, message: String) {
@@ -105,7 +139,8 @@ class ServerRepositoryImpl : ServerRepository {
     }
 
     override suspend fun disconnect(): Boolean {
-        job?.cancel()
+        pongJob?.cancel()
+        connectJob?.cancel()
         socketHandler.apply {
             send(BaseDto.Action.DISCONNECT, DisconnectDto(userId, 404))
             disconnect()
@@ -114,14 +149,11 @@ class ServerRepositoryImpl : ServerRepository {
     }
 
     override fun getConnectionStatus(): Boolean {
-        return socketHandler.serverIsConnected()
+        return socketHandler.getConnectionStatus()
     }
 
     override fun getLoggedUserId(): String {
         return userId
     }
 
-
-
 }
-
