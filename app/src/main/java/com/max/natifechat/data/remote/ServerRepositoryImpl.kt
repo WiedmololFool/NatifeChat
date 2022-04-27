@@ -5,6 +5,7 @@ import com.google.gson.Gson
 import com.max.natifechat.Constants
 import com.max.natifechat.log
 import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers.IO
 import model.*
 import org.json.JSONObject
 import java.net.DatagramPacket
@@ -22,7 +23,8 @@ class ServerRepositoryImpl : ServerRepository {
     private var connectJob: Job? = null
     private var usersList = mutableListOf<User>()
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
-
+    private lateinit var handleUsersReceivedJob: CompletableJob
+    private var handleConnectedJob: CompletableJob = Job()
 
     override fun getServerIp(): String {
         try {
@@ -47,18 +49,16 @@ class ServerRepositoryImpl : ServerRepository {
 
     override suspend fun connectToServer(username: String): Boolean {
         socketHandler = SocketHandler(Socket(getServerIp(), Constants.TCP_PORT), coroutineScope)
-        connectJob = coroutineScope.launch(Dispatchers.IO) {
+        connectJob = coroutineScope.launch(IO) {
             while (true) {
                 socketHandler.setListener(createClientListener(username = username))
                 socketHandler.loop()
             }
         }
-
-        //Проверка для того, чтобы ViewModel
-        while (!::userId.isInitialized) {
-            log("userId is not initialized yet")
+        while (handleConnectedJob.isActive) {
+            log("handle connected job is Active, Wait...")
         }
-        log("userId is initialized")
+        log("handle connected job is Completed")
         return getConnectionStatus()
     }
 
@@ -89,18 +89,20 @@ class ServerRepositoryImpl : ServerRepository {
         }
 
     private fun handleConnected(payload: String, username: String) {
-        val connectedDto = gson.fromJson(payload, ConnectDto::class.java)
-        userId = connectedDto.id
-        socketHandler.send(BaseDto.Action.CONNECT, ConnectDto(userId, username))
-        log("response Id = $userId")
-        socketHandler.send(BaseDto.Action.PING, PingDto(userId))
-
+        coroutineScope.launch(IO + handleConnectedJob) {
+            val connectedDto = gson.fromJson(payload, ConnectDto::class.java)
+            userId = connectedDto.id
+            socketHandler.send(BaseDto.Action.CONNECT, ConnectDto(userId, username))
+            log("response Id = $userId")
+            socketHandler.send(BaseDto.Action.PING, PingDto(userId))
+            handleConnectedJob.complete()
+        }
     }
 
     private fun handlePong(payload: String) {
         val pongDto = gson.fromJson(payload, PongDto::class.java)
         log(pongDto.toString())
-        coroutineScope.launch(Dispatchers.Default) {
+        CoroutineScope(IO).launch {
             delay(1000)
             log("send ping")
             socketHandler.send(BaseDto.Action.PING, PingDto(userId))
