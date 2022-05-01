@@ -1,19 +1,16 @@
 package com.max.natifechat.presentation.chat
 
+import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.lifecycle.lifecycleScope
-import com.max.natifechat.Constants
+import androidx.annotation.RequiresApi
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.max.natifechat.databinding.FragmentChatBinding
+import com.max.natifechat.log
 import com.max.natifechat.presentation.BaseFragment
 import com.max.natifechat.presentation.usersList.UsersHolder
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 
@@ -26,6 +23,9 @@ class ChatFragment : BaseFragment() {
     private var receiverId: String? = null
     private val viewModel by viewModel<ChatViewModel> {
         parametersOf(receiverId)
+    }
+    private val adapter by lazy {
+        ChatAdapter()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,26 +44,31 @@ class ChatFragment : BaseFragment() {
         return binding.root
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding?.apply {
             val receiver = UsersHolder.getUser(receiverId!!)
             receiverName.text = receiver?.name
+            rcView.adapter = adapter
+            rcView.layoutManager = LinearLayoutManager(requireContext())
+            rcView.itemAnimator = null
             btnSend.setOnClickListener {
                 if (inputField.text.isNotEmpty()) {
-                    CoroutineScope(Dispatchers.IO).launch {
-                        viewModel.sendMessage(inputField.text.toString())
-                    }
-                } else  {
+                    viewModel.sendMessage(inputField.text.toString())
+                    inputField.text.clear()
+                    inputField.clearFocus()
+                } else {
                     showToast("Input some text first")
                 }
             }
+
         }
-        lifecycleScope.launchWhenStarted {
-            viewModel.messages.onEach { messages ->
-                Log.e(Constants.TAG, messages.toString())
-            }
+        viewModel.messages.observe(viewLifecycleOwner) { messages ->
+            log(messages.toString())
+            adapter.submitList(messages)
         }
+        viewModel.loadMessages()
 
     }
 

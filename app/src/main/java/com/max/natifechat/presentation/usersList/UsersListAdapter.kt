@@ -16,6 +16,7 @@ class UsersListAdapter(
         private val binding: ListUserItemBinding
     ) : RecyclerView.ViewHolder(binding.root) {
 
+
         fun bindItem(userItem: User) = with(binding) {
             tvName.text = userItem.name
             root.setOnClickListener {

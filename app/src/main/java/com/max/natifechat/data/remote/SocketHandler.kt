@@ -3,6 +3,7 @@ package com.max.natifechat.data.remote
 import android.util.Log
 import com.google.gson.Gson
 import com.max.natifechat.Constants
+import com.max.natifechat.log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import com.max.natifechat.Constants
 import com.max.natifechat.databinding.FragmentStartBinding
+import com.max.natifechat.log
 import com.max.natifechat.presentation.usersList.UsersListFragment
 
 
@@ -28,16 +29,20 @@ class StartFragment : BaseLoginFragment() {
         val userFromStorage = getUserFromStorage()
         binding?.apply {
             tvConnectionFailed.visibility = View.GONE
+            progressBar.visibility = View.GONE
             if (userFromStorage.id == Constants.DEFAULT_USER_ID) {
-                Log.e(Constants.TAG, "No login before")
+                log("No login before")
                 changeFragment(LoginFragment.newInstance(), false)
             } else {
-                Log.e(Constants.TAG, "login")
                 login(username = userFromStorage.name, {
-                    Log.e(Constants.TAG, "onSuccess")
+                    log("onSuccess")
                     changeFragment(UsersListFragment.newInstance(), false)
                 }, {
-                    Log.e(Constants.TAG, "onError")
+                    log("onLoading")
+                    progressBar.visibility = View.VISIBLE
+                }, {
+                    log("onError")
+                    progressBar.visibility = View.GONE
                     tvConnectionFailed.visibility = View.VISIBLE
                 })
             }

@@ -1,14 +1,15 @@
 package com.max.natifechat.presentation.login
 
-import android.util.Log
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.max.natifechat.Constants
+import androidx.lifecycle.viewModelScope
 import com.max.natifechat.data.local.UserStorage
 import com.max.natifechat.data.remote.ServerRepository
 import com.max.natifechat.log
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import com.max.natifechat.presentation.login.model.ConnectionState
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import model.User
 
 class LoginViewModel(
@@ -16,16 +17,27 @@ class LoginViewModel(
     private val userStorage: UserStorage
 ) : ViewModel() {
 
-    private val _connectionStatus = MutableStateFlow(ConnectionStatus(false))
-    val connectionStatus: StateFlow<ConnectionStatus> = _connectionStatus.asStateFlow()
+    private val _connectionState = MutableLiveData<ConnectionState>()
+    val connectionState: LiveData<ConnectionState> = _connectionState
+    private var isConnected = false
 
     suspend fun performLogin(username: String) {
+        log("performLogin")
         serverRepository.apply {
-            val connection = ConnectionStatus(connectToServer(username))
-            _connectionStatus.value = connection
-            log(_connectionStatus.value.toString())
-            if (connection.status) {
+            connectToServer(username)
+            val job = withTimeoutOrNull(2000L) {
+                while (!isConnected) {
+                    getConnectStatus().onEach { connectionStatus ->
+                        isConnected = connectionStatus.status
+                        setConnectionState(ConnectionState.LOADING)
+                    }.launchIn(viewModelScope)
+                    delay(100)
+                }
+                setConnectionState(ConnectionState.SUCCESS)
                 userStorage.save(User(id = getLoggedUserId(), name = username))
+            }
+            if (job == null) {
+                setConnectionState(ConnectionState.ERROR)
             }
         }
     }
@@ -34,14 +46,9 @@ class LoginViewModel(
         return userStorage.get()
     }
 
-    data class ConnectionStatus(val status: Boolean) {
-
-        override fun equals(other: Any?): Boolean {
-            return super.equals(other)
-        }
-
-        override fun hashCode(): Int {
-            return status.hashCode()
+    private suspend fun setConnectionState(connectionState: ConnectionState) {
+        withContext(Dispatchers.Main) {
+            _connectionState.value = connectionState
         }
     }
 }

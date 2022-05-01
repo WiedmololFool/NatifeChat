@@ -1,11 +1,11 @@
 package com.max.natifechat.presentation.usersList
 
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.*
 import com.max.natifechat.data.local.UserStorage
 import com.max.natifechat.data.remote.ServerRepository
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import com.max.natifechat.log
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import model.User
 
 class UsersListViewModel(
@@ -13,14 +13,30 @@ class UsersListViewModel(
     private val userStorage: UserStorage
 ) : ViewModel() {
 
-    private val _users = MutableStateFlow(listOf<User>())
-    val users: StateFlow<List<User>> = _users.asStateFlow()
+    private val _users = MutableLiveData<List<User>>()
+    val users: LiveData<List<User>> = _users
+    var loadUsersJob: Job? = null
 
-    suspend fun loadUsers() {
-        _users.value = serverRepository.getUsers()
+    fun loadUsers() {
+        serverRepository.apply {
+            getUsersList().onEach { usersList ->
+                log(usersList.toString())
+                _users.value = usersList
+            }.launchIn(viewModelScope)
+            loadUsersJob = viewModelScope.launch {
+                withContext(Dispatchers.IO) {
+                    while (true) {
+                        delay(1000)
+                        requestUsers()
+                    }
+                }
+            }
+        }
+
     }
 
     suspend fun logout(): Boolean {
+        loadUsersJob?.cancel()
         userStorage.clear()
         return serverRepository.disconnect()
     }
