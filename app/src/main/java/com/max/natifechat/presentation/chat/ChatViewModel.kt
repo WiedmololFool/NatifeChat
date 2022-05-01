@@ -1,12 +1,9 @@
 package com.max.natifechat.presentation.chat
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.max.natifechat.DateFormatter
 import com.max.natifechat.data.remote.ServerRepository
 import com.max.natifechat.log
 import com.max.natifechat.data.remote.model.Message
@@ -24,11 +21,7 @@ class ChatViewModel(
     private val _messages = MutableLiveData<List<Message>>()
     val messages: LiveData<List<Message>> = _messages
 
-    private val dateFormatter = DateFormatter()
-
-    @RequiresApi(Build.VERSION_CODES.O)
     fun sendMessage(message: String) {
-
         viewModelScope.launch(Dispatchers.IO) {
             serverRepository.sendMessage(receiverId, message)
         }
