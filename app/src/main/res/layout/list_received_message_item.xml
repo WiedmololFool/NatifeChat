@@ -27,9 +27,10 @@
                 android:layout_marginHorizontal="15dp"
                 android:layout_marginTop="15dp"
                 android:maxWidth="320dp"
+                android:minWidth="40dp"
                 android:textAppearance="?android:attr/textAppearanceLarge"
-                android:textSize="20sp"
                 android:textColor="@color/black"
+                android:textSize="20sp"
                 tools:text="Hello darkness my old friend," />
 
             <TextView

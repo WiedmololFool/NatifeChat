@@ -1,9 +1,8 @@
 package com.max.natifechat.data.remote
 
 import com.max.natifechat.data.remote.model.IsConnected
-import com.max.natifechat.presentation.chat.models.Message
+import com.max.natifechat.data.remote.model.Message
 import kotlinx.coroutines.flow.StateFlow
-import model.MessageDto
 import model.User
 
 interface ServerRepository {

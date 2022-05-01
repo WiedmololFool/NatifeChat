@@ -4,48 +4,48 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".presentation.chat.ChatFragment"
-    android:padding="8dp">
+    android:padding="8dp"
+    tools:context=".presentation.chat.ChatFragment">
 
- <TextView
-     android:id="@+id/receiverName"
-     android:layout_width="0dp"
-     android:layout_height="wrap_content"
-     android:textAppearance="@style/TextAppearance.AppCompat.Large"
-     android:textSize="28sp"
-     app:layout_constraintEnd_toEndOf="parent"
-     app:layout_constraintStart_toStartOf="parent"
-     app:layout_constraintTop_toTopOf="parent"
-     tools:text="Danil" />
+    <TextView
+        android:id="@+id/receiverName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:textSize="28sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Danil" />
 
- <androidx.recyclerview.widget.RecyclerView
-     android:id="@+id/rcView"
-     android:layout_width="0dp"
-     android:layout_height="0dp"
-     app:layout_constraintBottom_toTopOf="@+id/inputField"
-     app:layout_constraintEnd_toEndOf="parent"
-     app:layout_constraintStart_toStartOf="parent"
-     app:layout_constraintTop_toBottomOf="@id/receiverName"
-     tools:listitem="@layout/list_received_message_item"/>
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rcView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/inputField"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/receiverName"
+        tools:listitem="@layout/list_received_message_item" />
 
- <com.google.android.material.floatingactionbutton.FloatingActionButton
-     android:id="@+id/btnSend"
-     android:layout_width="wrap_content"
-     android:layout_height="wrap_content"
-     app:layout_constraintBottom_toBottomOf="parent"
-     app:layout_constraintEnd_toEndOf="parent"
-     android:clickable="true"
-     android:focusable="true"
-     android:src="@drawable/ic_send"
-     android:tint="@color/white"
-     app:fabSize="mini"/>
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btnSend"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:clickable="true"
+        android:focusable="true"
+        android:src="@drawable/ic_send"
+        android:tint="@color/white"
+        app:fabSize="mini"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
- <EditText
-     android:id="@+id/inputField"
-     android:layout_width="0dp"
-     android:layout_height="wrap_content"
-     android:hint="Input something..."
-     app:layout_constraintBottom_toBottomOf="parent"
-     app:layout_constraintEnd_toStartOf="@id/btnSend"
-     app:layout_constraintStart_toStartOf="parent" />
+    <EditText
+        android:id="@+id/inputField"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Input something..."
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/btnSend"
+        app:layout_constraintStart_toStartOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

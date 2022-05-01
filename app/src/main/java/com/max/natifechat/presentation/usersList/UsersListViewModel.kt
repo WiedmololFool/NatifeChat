@@ -3,7 +3,6 @@ package com.max.natifechat.presentation.usersList
 import androidx.lifecycle.*
 import com.max.natifechat.data.local.UserStorage
 import com.max.natifechat.data.remote.ServerRepository
-import com.max.natifechat.log
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import model.User
@@ -20,7 +19,6 @@ class UsersListViewModel(
     fun loadUsers() {
         serverRepository.apply {
             getUsersList().onEach { usersList ->
-                log(usersList.toString())
                 _users.value = usersList
             }.launchIn(viewModelScope)
             loadUsersJob = viewModelScope.launch {

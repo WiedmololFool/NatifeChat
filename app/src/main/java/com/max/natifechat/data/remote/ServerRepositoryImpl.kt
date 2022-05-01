@@ -8,7 +8,7 @@ import com.max.natifechat.Constants
 import com.max.natifechat.DateFormatter
 import com.max.natifechat.data.remote.model.IsConnected
 import com.max.natifechat.log
-import com.max.natifechat.presentation.chat.models.Message
+import com.max.natifechat.data.remote.model.Message
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.flow.*
@@ -32,6 +32,12 @@ class ServerRepositoryImpl : ServerRepository {
     private val receivedMessages = MutableStateFlow(listOf<MessageDto>())
     private val dateFormatter = DateFormatter()
     private val chats = mutableListOf<Chat>()
+
+    init {
+        log("serverRepository init")
+        log("chats init $chats")
+        createChatForNewUsers()
+    }
 
     override fun getServerIp(): String {
         try {
@@ -57,12 +63,8 @@ class ServerRepositoryImpl : ServerRepository {
     override suspend fun connectToServer(username: String) {
         try {
             socketHandler = SocketHandler(Socket(getServerIp(), Constants.TCP_PORT), coroutineScope)
-//        connectJob = coroutineScope.launch(IO) {
-//            while (true) {
             socketHandler.setListener(createClientListener(username = username))
             socketHandler.loop()
-//            }
-//        }
         } catch (e: Exception) {
             log(e.message.toString())
         }
@@ -124,15 +126,44 @@ class ServerRepositoryImpl : ServerRepository {
             }
         }
         users.value = usersList.toList()
-//        log(users.value.toString())
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun handleNewMessage(payload: String) {
+        val date = dateFormatter.format(LocalDateTime.now())
         val messageDto = gson.fromJson(payload, MessageDto::class.java)
         val currentReceivedMessages = receivedMessages.value
         receivedMessages.value = currentReceivedMessages + listOf(messageDto)
         log("HANDLE NEW MESSAGE FROM ${messageDto.from}: ${messageDto.message}")
         log("HANDLE LIST OF MESSAGES: \n ${receivedMessages.value}")
+        val chat = chats.firstOrNull {
+            it.chatId == messageDto.from.id
+        }
+        log("FINDED CHAT IN HANDLE NEW MESSAGE $chat")
+        val currentMessages = chat?.messages?.value
+        if (currentMessages != null) {
+            chat.messages.value = currentMessages + listOf(
+                Message(
+                    chatId = messageDto.from.id,
+                    message = messageDto.message,
+                    date = date, false
+                )
+            )
+        }
+    }
+
+    private fun createChatForNewUsers() {
+        users.asStateFlow().onEach { userList ->
+            log("ON UPDATE USERS $userList")
+            userList.forEach { user ->
+                if (!chats.any { chat ->
+                        chat.chatId == user.id
+                    }) {
+                    chats.add(Chat(user.id, MutableStateFlow(listOf<Message>())))
+                    log("CHATLIST UPDATED $chats")
+                }
+            }
+        }.launchIn(scope = coroutineScope)
     }
 
     override fun getUsersList(): StateFlow<List<User>> {
@@ -141,42 +172,43 @@ class ServerRepositoryImpl : ServerRepository {
 
     @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun getReceivedMessages(senderId: String): StateFlow<List<Message>> {
-//        val list = receivedMessages.value.toMutableList().apply {
-//            removeAll {
-//                it.from.id != senderId
-//            }
-//        }
-        val date = dateFormatter.format(LocalDateTime.now())
-        return receivedMessages.asStateFlow().map { list ->
-            list.toMutableList().apply {
-                removeAll {
-                    it.from.id != senderId
-                }
-            }.toList().map {
-                Message(senderId, message = it.message, date = date, false)
-            }
-        }.stateIn(scope = coroutineScope)
-
-//        return receivedMessages.asStateFlow()
+        val chat = chats.firstOrNull {
+            it.chatId == senderId
+        }
+        return chat?.messages?.asStateFlow() ?: throw IllegalArgumentException("Flow required")
     }
+
 
     override suspend fun requestUsers(): Boolean {
         socketHandler.send(BaseDto.Action.GET_USERS, GetUsersDto(userId))
         return true
     }
 
-    override suspend fun sendMessage(receiver: String, message: String) {
+    @RequiresApi(Build.VERSION_CODES.O)
+    override suspend fun sendMessage(receiverId: String, message: String) {
+        val date = dateFormatter.format(LocalDateTime.now())
         Log.e(Constants.TAG, "repository send message $message")
         socketHandler.send(
             BaseDto.Action.SEND_MESSAGE, SendMessageDto(
                 id = userId,
-                receiver = receiver,
+                receiver = receiverId,
                 message = message
             )
         )
+        val chat = chats.firstOrNull {
+            it.chatId == receiverId
+        }
+        log("FINDED CHAT IN SEND MESSAGE $chat")
+        val currentMessages = chat?.messages?.value
+        if (currentMessages != null) {
+            chat.messages.value = currentMessages + listOf(
+                Message(receiverId, message, date, true)
+            )
+        }
     }
 
     override suspend fun disconnect(): Boolean {
+        chats.clear()
         isConnected.value = IsConnected(false)
         socketHandler.apply {
             send(BaseDto.Action.DISCONNECT, DisconnectDto(userId, 404))
@@ -194,5 +226,5 @@ class ServerRepositoryImpl : ServerRepository {
         return userId
     }
 
-    data class Chat(val chatId: String, val messages: MutableStateFlow<Message>)
+    data class Chat(val chatId: String, val messages: MutableStateFlow<List<Message>>)
 }

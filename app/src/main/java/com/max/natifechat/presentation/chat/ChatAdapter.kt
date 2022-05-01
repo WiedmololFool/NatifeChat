@@ -8,9 +8,9 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
 import com.max.natifechat.databinding.ListReceivedMessageItemBinding
 import com.max.natifechat.databinding.ListSendedMessageItemBinding
-import com.max.natifechat.presentation.chat.models.Message
+import com.max.natifechat.data.remote.model.Message
 
-class ChatAdapter() : ListAdapter<Message, ChatAdapter.AbstractViewHolder>(MessageComparator()) {
+class ChatAdapter : ListAdapter<Message, ChatAdapter.AbstractViewHolder>(MessageComparator()) {
 
     abstract class AbstractViewHolder(
         binding: ViewBinding

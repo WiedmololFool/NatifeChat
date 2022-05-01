@@ -1,4 +1,4 @@
-package com.max.natifechat.presentation.chat.models
+package com.max.natifechat.data.remote.model
 
 
 /**

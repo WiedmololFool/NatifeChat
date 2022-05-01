@@ -58,6 +58,7 @@ class ChatFragment : BaseFragment() {
                     viewModel.sendMessage(inputField.text.toString())
                     inputField.text.clear()
                     inputField.clearFocus()
+                    rcView.scrollToPosition(adapter.itemCount - 1)
                 } else {
                     showToast("Input some text first")
                 }
