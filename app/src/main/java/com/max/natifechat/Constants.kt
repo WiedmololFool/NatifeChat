@@ -12,4 +12,5 @@ object Constants {
     const val KEY_USER_NAME = "keyName"
     const val DEFAULT_USER_ID = "Default user id"
     const val DEFAULT_USER_NAME = "Default user name"
+    const val NO_IP ="noIp"
 }

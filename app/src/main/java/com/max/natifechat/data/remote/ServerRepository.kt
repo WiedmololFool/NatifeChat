@@ -7,7 +7,6 @@ import model.User
 
 interface ServerRepository {
 
-
     fun getServerIp(): String
 
     suspend fun connectToServer(username: String)
@@ -25,5 +24,4 @@ interface ServerRepository {
     fun getConnectStatus(): StateFlow<IsConnected>
 
     fun getLoggedUserId(): String
-
 }

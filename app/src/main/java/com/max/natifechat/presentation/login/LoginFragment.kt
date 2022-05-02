@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.max.natifechat.R
 import com.max.natifechat.databinding.FragmentLoginBinding
 import com.max.natifechat.log
 import com.max.natifechat.presentation.usersList.UsersListFragment
@@ -28,7 +29,7 @@ class LoginFragment : BaseLoginFragment() {
             loginButton.setOnClickListener {
                 login(username = usernameField.text.toString(), {
                     log("onSuccess")
-                    showToast("Connection success")
+                    showToast(getString(R.string.connection_success_message))
                     changeFragment(UsersListFragment.newInstance(), false)
                 }, {
                     log("onLoading")
@@ -36,7 +37,7 @@ class LoginFragment : BaseLoginFragment() {
                 }, {
                     progressBar.visibility = View.GONE
                     log("onError")
-                    showToast("Connection failed")
+                    showToast(getString(R.string.connection_failed_message))
                 })
             }
         }

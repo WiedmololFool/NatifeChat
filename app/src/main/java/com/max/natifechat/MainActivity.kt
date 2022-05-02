@@ -18,6 +18,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.e(Constants.TAG,"onDestroy ${this.javaClass.simpleName}")
+        log("onDestroy ${this.javaClass.simpleName}")
     }
 }

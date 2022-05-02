@@ -3,8 +3,6 @@ package com.max.natifechat
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
-import com.google.gson.Gson
-import model.*
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 

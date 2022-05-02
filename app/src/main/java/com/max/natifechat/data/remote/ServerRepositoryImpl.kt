@@ -56,7 +56,7 @@ class ServerRepositoryImpl : ServerRepository {
             return serverIp
         } catch (e: Exception) {
             log(e.message.toString())
-            return "no ip"
+            return Constants.NO_IP
         }
     }
 
@@ -73,6 +73,7 @@ class ServerRepositoryImpl : ServerRepository {
 
     private fun createClientListener(username: String): SocketHandler.SocketListener =
         object : SocketHandler.SocketListener {
+            @RequiresApi(Build.VERSION_CODES.O)
             override fun onNewMessage(message: String) {
                 try {
                     val dto = gson.fromJson(message, BaseDto::class.java)

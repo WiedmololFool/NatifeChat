@@ -38,13 +38,14 @@
         android:tint="@color/white"
         app:fabSize="mini"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        android:contentDescription="@string/floating_button_send_message_description" />
 
     <EditText
         android:id="@+id/inputField"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:hint="Input something..."
+        android:hint="@string/input_something_text"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/btnSend"
         app:layout_constraintStart_toStartOf="parent" />

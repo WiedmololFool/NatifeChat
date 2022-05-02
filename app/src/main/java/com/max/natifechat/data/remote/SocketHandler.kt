@@ -51,7 +51,6 @@ class SocketHandler(
     }
 
     fun getConnectionStatus(): Boolean {
-        Log.e(Constants.TAG, "server is connected ${connected}")
         return server.isConnected
     }
 

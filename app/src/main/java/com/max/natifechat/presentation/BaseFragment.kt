@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.max.natifechat.Constants
 import com.max.natifechat.R
+import com.max.natifechat.log
 
 abstract class BaseFragment : Fragment() {
 
@@ -24,12 +25,12 @@ abstract class BaseFragment : Fragment() {
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.e(Constants.TAG,"onDestroy ${this.javaClass.simpleName}")
+        log("onDestroy ${this.javaClass.simpleName}")
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        Log.e(Constants.TAG,"onDestroyView ${this.javaClass.simpleName}")
+        log("onDestroyView ${this.javaClass.simpleName}")
     }
 
     protected fun showToast(message: String) {

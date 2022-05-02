@@ -1,8 +1,8 @@
 package com.max.natifechat.data.local
 
 import android.content.Context
-import android.util.Log
 import com.max.natifechat.Constants
+import com.max.natifechat.log
 import model.User
 
 
@@ -16,7 +16,7 @@ class SharedPrefUserStorage(context: Context) : UserStorage {
         Constants.apply {
             sharedPreferences.edit().putString(KEY_USER_ID, user.id).apply()
             sharedPreferences.edit().putString(KEY_USER_NAME, user.name).apply()
-            Log.e(TAG, "Saved user $user")
+            log("Saved user $user")
             return true
         }
     }

@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.max.natifechat.R
 import com.max.natifechat.databinding.FragmentChatBinding
 import com.max.natifechat.log
 import com.max.natifechat.presentation.BaseFragment
@@ -46,7 +47,7 @@ class ChatFragment : BaseFragment() {
         super.onViewCreated(view, savedInstanceState)
         binding?.apply {
             val receiver = UsersHolder.getUser(receiverId!!)
-            receiverName.text = receiver?.name
+            receiverName.text = receiver.name
             rcView.adapter = adapter
             rcView.layoutManager = LinearLayoutManager(requireContext())
             rcView.itemAnimator = null
@@ -57,7 +58,7 @@ class ChatFragment : BaseFragment() {
                     inputField.clearFocus()
                     rcView.scrollToPosition(adapter.itemCount - 1)
                 } else {
-                    showToast("Input some text first")
+                    showToast(getString(R.string.input_some_text_message))
                 }
             }
 
