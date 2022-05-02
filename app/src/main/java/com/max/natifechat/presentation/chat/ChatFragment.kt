@@ -51,12 +51,13 @@ class ChatFragment : BaseFragment() {
             rcView.adapter = adapter
             rcView.layoutManager = LinearLayoutManager(requireContext())
             rcView.itemAnimator = null
+            rcView.scrollToPosition(adapter.itemCount)
             btnSend.setOnClickListener {
                 if (inputField.text.isNotEmpty()) {
                     viewModel.sendMessage(inputField.text.toString())
                     inputField.text.clear()
                     inputField.clearFocus()
-                    rcView.scrollToPosition(adapter.itemCount - 1)
+                    rcView.scrollToPosition(adapter.itemCount)
                 } else {
                     showToast(getString(R.string.input_some_text_message))
                 }
@@ -66,6 +67,7 @@ class ChatFragment : BaseFragment() {
         viewModel.messages.observe(viewLifecycleOwner) { messages ->
             log(messages.toString())
             adapter.submitList(messages)
+            binding?.rcView?.scrollToPosition(adapter.itemCount)
         }
         viewModel.loadMessages()
 
