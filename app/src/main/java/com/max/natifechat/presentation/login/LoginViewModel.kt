@@ -23,7 +23,7 @@ class LoginViewModel(
     init {
         viewModelScope.launch {
             serverRepository.getConnectStatus().collect { connectionStatus ->
-                isConnected = connectionStatus.status
+                isConnected = connectionStatus
             }
         }
     }

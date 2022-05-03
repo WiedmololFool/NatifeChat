@@ -6,7 +6,6 @@ import androidx.annotation.RequiresApi
 import com.google.gson.Gson
 import com.max.natifechat.Constants
 import com.max.natifechat.DateFormatter
-import com.max.natifechat.data.remote.model.IsConnected
 import com.max.natifechat.log
 import com.max.natifechat.data.remote.model.Message
 import kotlinx.coroutines.*
@@ -27,7 +26,7 @@ class ServerRepositoryImpl : ServerRepository {
     private lateinit var userId: String
     private val gson = Gson()
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
-    private val isConnected = MutableStateFlow(IsConnected(false))
+    private val isConnected = MutableStateFlow(false)
     private val users = MutableStateFlow(listOf<User>())
     private val receivedMessages = MutableStateFlow(listOf<MessageDto>())
     private val dateFormatter = DateFormatter()
@@ -110,11 +109,11 @@ class ServerRepositoryImpl : ServerRepository {
         socketHandler.send(BaseDto.Action.CONNECT, ConnectDto(userId, username))
         log("response Id = $userId")
         socketHandler.send(BaseDto.Action.PING, PingDto(userId))
-        isConnected.value = IsConnected(true)
+        isConnected.value = true
         log(isConnected.value.toString())
 
         coroutineScope.launch(IO) {
-            while (isConnected.value.status) {
+            while (isConnected.value) {
                 delay(5000L)
                 log("send ping")
                 socketHandler.send(BaseDto.Action.PING, PingDto(userId))
@@ -227,7 +226,7 @@ class ServerRepositoryImpl : ServerRepository {
 
     override suspend fun disconnect(): Boolean {
         chats.clear()
-        isConnected.value = IsConnected(false)
+        isConnected.value = false
         socketHandler.apply {
             send(BaseDto.Action.DISCONNECT, DisconnectDto(userId, 404))
             disconnect()
@@ -236,7 +235,7 @@ class ServerRepositoryImpl : ServerRepository {
         return true
     }
 
-    override fun getConnectStatus(): StateFlow<IsConnected> {
+    override fun getConnectStatus(): StateFlow<Boolean> {
         log(isConnected.value.toString())
         return isConnected.asStateFlow()
     }

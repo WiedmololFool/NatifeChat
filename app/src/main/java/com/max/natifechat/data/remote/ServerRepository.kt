@@ -1,6 +1,5 @@
 package com.max.natifechat.data.remote
 
-import com.max.natifechat.data.remote.model.IsConnected
 import com.max.natifechat.data.remote.model.Message
 import kotlinx.coroutines.flow.StateFlow
 import model.User
@@ -22,7 +21,7 @@ interface ServerRepository {
 
     suspend fun disconnect(): Boolean
 
-    fun getConnectStatus(): StateFlow<IsConnected>
+    fun getConnectStatus(): StateFlow<Boolean>
 
     fun getLoggedUserId(): String
 }
