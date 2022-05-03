@@ -9,7 +9,6 @@ import com.max.natifechat.R
 import com.max.natifechat.databinding.FragmentChatBinding
 import com.max.natifechat.log
 import com.max.natifechat.presentation.BaseFragment
-import com.max.natifechat.presentation.usersList.UsersHolder
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 
@@ -19,19 +18,14 @@ private const val ARG_RECEIVER_ID = "receiverId"
 class ChatFragment : BaseFragment() {
 
     private var binding: FragmentChatBinding? = null
-    private var receiverId: String? = null
+    private val receiverId by lazy {
+        arguments?.getString(ARG_RECEIVER_ID)
+    }
     private val viewModel by viewModel<ChatViewModel> {
         parametersOf(receiverId)
     }
     private val adapter by lazy {
         ChatAdapter()
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            receiverId = it.getString(ARG_RECEIVER_ID)
-        }
     }
 
     override fun onCreateView(
@@ -46,7 +40,7 @@ class ChatFragment : BaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding?.apply {
-            val receiver = UsersHolder.getUser(receiverId!!)
+            val receiver = viewModel.loadReceiver()
             receiverName.text = receiver.name
             rcView.adapter = adapter
             rcView.layoutManager = LinearLayoutManager(requireContext())
@@ -57,7 +51,6 @@ class ChatFragment : BaseFragment() {
                     viewModel.sendMessage(inputField.text.toString())
                     inputField.text.clear()
                     inputField.clearFocus()
-                    rcView.scrollToPosition(adapter.itemCount)
                 } else {
                     showToast(getString(R.string.input_some_text_message))
                 }
@@ -66,11 +59,10 @@ class ChatFragment : BaseFragment() {
         }
         viewModel.messages.observe(viewLifecycleOwner) { messages ->
             log(messages.toString())
-            adapter.submitList(messages)
-            binding?.rcView?.scrollToPosition(adapter.itemCount)
+            adapter.submitList(messages) {
+                binding?.rcView?.scrollToPosition(adapter.itemCount - 1)
+            }
         }
-        viewModel.loadMessages()
-
     }
 
     override fun onDestroyView() {

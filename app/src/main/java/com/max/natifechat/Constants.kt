@@ -13,4 +13,6 @@ object Constants {
     const val DEFAULT_USER_ID = "Default user id"
     const val DEFAULT_USER_NAME = "Default user name"
     const val NO_IP ="noIp"
+    const val SENDED_MESSAGE = 0
+    const val RECEIVED_MESSAGE = 1
 }

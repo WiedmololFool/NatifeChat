@@ -9,7 +9,6 @@ import com.max.natifechat.data.remote.ServerRepository
 import com.max.natifechat.log
 import com.max.natifechat.presentation.login.model.ConnectionState
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
 import model.User
 
 class LoginViewModel(
@@ -21,25 +20,29 @@ class LoginViewModel(
     val connectionState: LiveData<ConnectionState> = _connectionState
     private var isConnected = false
 
-    suspend fun performLogin(username: String) {
-        log("performLogin")
-        serverRepository.apply {
-            connectToServer(username)
-            val job = withTimeoutOrNull(2000L) {
-                while (!isConnected) {
-                    getConnectStatus().onEach { connectionStatus ->
-                        isConnected = connectionStatus.status
-                        setConnectionState(ConnectionState.LOADING)
-                    }.launchIn(viewModelScope)
-                    delay(100)
-                }
-                setConnectionState(ConnectionState.SUCCESS)
-                userStorage.save(User(id = getLoggedUserId(), name = username))
-            }
-            if (job == null) {
-                setConnectionState(ConnectionState.ERROR)
+    init {
+        viewModelScope.launch {
+            serverRepository.getConnectStatus().collect { connectionStatus ->
+                isConnected = connectionStatus.status
             }
         }
+    }
+
+    suspend fun performLogin(username: String) {
+        log("performLogin")
+        serverRepository.connectToServer(username)
+        val job = withTimeoutOrNull(3000L) {
+            while (!isConnected) {
+                setConnectionState(ConnectionState.LOADING)
+                delay(100)
+            }
+            setConnectionState(ConnectionState.SUCCESS)
+            userStorage.save(User(id = serverRepository.getLoggedUserId(), name = username))
+        }
+        if (job == null) {
+            setConnectionState(ConnectionState.ERROR)
+        }
+
     }
 
     fun getUserFromStorage(): User {

@@ -8,9 +8,8 @@ import com.max.natifechat.data.remote.ServerRepository
 import com.max.natifechat.log
 import com.max.natifechat.data.remote.model.Message
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import model.User
 import java.lang.Exception
 
 class ChatViewModel(
@@ -21,23 +20,32 @@ class ChatViewModel(
     private val _messages = MutableLiveData<List<Message>>()
     val messages: LiveData<List<Message>> = _messages
 
+    init {
+        loadMessages()
+
+    }
+
     fun sendMessage(message: String) {
         viewModelScope.launch(Dispatchers.IO) {
             serverRepository.sendMessage(receiverId, message)
         }
     }
 
-    fun loadMessages() {
-        viewModelScope.launch(Dispatchers.IO) {
+    fun loadReceiver(): User {
+        return serverRepository.getUserById(receiverId)
+    }
+
+    private fun loadMessages() {
+        viewModelScope.launch {
             try {
-                serverRepository.getReceivedMessages(receiverId).onEach { messageList ->
+                serverRepository.getReceivedMessages(receiverId).collect { messageList ->
                     log("MESSAGES IN VIEW MODEL $messageList")
                     _messages.value = messageList
-                }.launchIn(viewModelScope)
+                }
+
             } catch (e: Exception) {
                 log(e.message.toString())
             }
-
         }
     }
 }

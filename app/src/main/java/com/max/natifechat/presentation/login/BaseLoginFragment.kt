@@ -1,5 +1,6 @@
 package com.max.natifechat.presentation.login
 
+import androidx.lifecycle.lifecycleScope
 import com.max.natifechat.log
 import com.max.natifechat.presentation.BaseFragment
 import com.max.natifechat.presentation.login.model.ConnectionState
@@ -8,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import model.User
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import java.lang.Exception
 
 abstract class BaseLoginFragment() : BaseFragment() {
 
@@ -29,9 +31,10 @@ abstract class BaseLoginFragment() : BaseFragment() {
             }
         }
 
-        CoroutineScope(Dispatchers.IO).launch {
-            viewModel.performLogin(username = username)
-        }
+
+           viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+               viewModel.performLogin(username = username)
+           }
     }
 
     protected fun getUserFromStorage(): User {

@@ -21,6 +21,7 @@ class DateFormatter {
 fun log(input: String) {
     var retVal = ""
     val trace = Throwable().stackTrace
+//    val trace = Thread.currentThread().stackTrace
     if (trace.size >= 2) {
         val index = trace[1].className.lastIndexOf(".") + 1
         retVal = (trace[1].className.substring(index) + "." + trace[1].methodName

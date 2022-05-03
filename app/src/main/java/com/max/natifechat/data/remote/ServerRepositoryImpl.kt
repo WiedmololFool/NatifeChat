@@ -32,6 +32,7 @@ class ServerRepositoryImpl : ServerRepository {
     private val receivedMessages = MutableStateFlow(listOf<MessageDto>())
     private val dateFormatter = DateFormatter()
     private val chats = mutableListOf<Chat>()
+    private var pingTimeoutJob: Job? = null
 
     init {
         log("serverRepository init")
@@ -39,7 +40,7 @@ class ServerRepositoryImpl : ServerRepository {
         createChatForNewUsers()
     }
 
-    override fun getServerIp(): String {
+    private fun getServerIp(): String {
         try {
             val serverDatagramSocket = DatagramSocket()
             val buffer = ByteArray(256)
@@ -62,8 +63,11 @@ class ServerRepositoryImpl : ServerRepository {
 
     override suspend fun connectToServer(username: String) {
         try {
-            socketHandler = SocketHandler(Socket(getServerIp(), Constants.TCP_PORT), coroutineScope)
-            socketHandler.setListener(createClientListener(username = username))
+            socketHandler = SocketHandler(
+                Socket(getServerIp(), Constants.TCP_PORT),
+                coroutineScope,
+                createClientListener(username = username)
+            )
             socketHandler.loop()
         } catch (e: Exception) {
             log(e.message.toString())
@@ -100,6 +104,7 @@ class ServerRepositoryImpl : ServerRepository {
 
 
     private fun handleConnected(payload: String, username: String) {
+        log("handle connected")
         val connectedDto = gson.fromJson(payload, ConnectDto::class.java)
         userId = connectedDto.id
         socketHandler.send(BaseDto.Action.CONNECT, ConnectDto(userId, username))
@@ -107,26 +112,32 @@ class ServerRepositoryImpl : ServerRepository {
         socketHandler.send(BaseDto.Action.PING, PingDto(userId))
         isConnected.value = IsConnected(true)
         log(isConnected.value.toString())
+
+        coroutineScope.launch(IO) {
+            while (isConnected.value.status) {
+                delay(5000L)
+                log("send ping")
+                socketHandler.send(BaseDto.Action.PING, PingDto(userId))
+                pingTimeoutJob = this.launch {
+                    log("PING TIMEOUT JOB IS STARTED")
+                    delay(10000L)
+                    log("PING TIMEOUT")
+                    disconnect()
+                }
+            }
+
+        }
     }
 
     private fun handlePong(payload: String) {
         val pongDto = gson.fromJson(payload, PongDto::class.java)
         log(pongDto.toString())
-        coroutineScope.launch(IO) {
-            delay(5000L)
-            log("send ping")
-            socketHandler.send(BaseDto.Action.PING, PingDto(userId))
-        }
+        pingTimeoutJob?.cancel()
     }
 
     private fun handleUsersReceived(payload: String) {
         val userReceivedDto = gson.fromJson(payload, UsersReceivedDto::class.java)
-        val usersList = userReceivedDto.users.toMutableList().apply {
-            removeAll {
-                it.id == userId
-            }
-        }
-        users.value = usersList.toList()
+        users.value = userReceivedDto.users
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -171,8 +182,14 @@ class ServerRepositoryImpl : ServerRepository {
         return users.asStateFlow()
     }
 
+    override fun getUserById(userId: String): User {
+        return users.value.firstOrNull {
+            it.id == userId
+        } ?: throw java.lang.IllegalArgumentException("User required")
+    }
+
     @RequiresApi(Build.VERSION_CODES.O)
-    override suspend fun getReceivedMessages(senderId: String): StateFlow<List<Message>> {
+    override fun getReceivedMessages(senderId: String): StateFlow<List<Message>> {
         val chat = chats.firstOrNull {
             it.chatId == senderId
         }
@@ -215,6 +232,7 @@ class ServerRepositoryImpl : ServerRepository {
             send(BaseDto.Action.DISCONNECT, DisconnectDto(userId, 404))
             disconnect()
         }
+        log("Disconnect")
         return true
     }
 

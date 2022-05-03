@@ -7,13 +7,14 @@ import model.User
 
 interface ServerRepository {
 
-    fun getServerIp(): String
 
     suspend fun connectToServer(username: String)
 
     fun getUsersList(): StateFlow<List<User>>
 
-    suspend fun getReceivedMessages(senderId: String): StateFlow<List<Message>>
+    fun getUserById(userId: String): User
+
+    fun getReceivedMessages(senderId: String): StateFlow<List<Message>>
 
     suspend fun sendMessage(receiver: String, message: String)
 

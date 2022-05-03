@@ -1,9 +1,7 @@
 package com.max.natifechat.presentation
 
-import android.util.Log
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import com.max.natifechat.Constants
 import com.max.natifechat.R
 import com.max.natifechat.log
 

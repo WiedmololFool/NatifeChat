@@ -4,7 +4,6 @@ import androidx.lifecycle.*
 import com.max.natifechat.data.local.UserStorage
 import com.max.natifechat.data.remote.ServerRepository
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
 import model.User
 
 class UsersListViewModel(
@@ -16,26 +15,28 @@ class UsersListViewModel(
     val users: LiveData<List<User>> = _users
     var loadUsersJob: Job? = null
 
-    fun loadUsers() {
-        serverRepository.apply {
-            getUsersList().onEach { usersList ->
+    init {
+        viewModelScope.launch {
+            serverRepository.getUsersList().collect { usersList ->
                 _users.value = usersList
-            }.launchIn(viewModelScope)
-            loadUsersJob = viewModelScope.launch {
-                withContext(Dispatchers.IO) {
-                    while (true) {
-                        delay(1000)
-                        requestUsers()
-                    }
-                }
             }
         }
-
     }
 
-    suspend fun logout(): Boolean {
-        loadUsersJob?.cancel()
-        userStorage.clear()
-        return serverRepository.disconnect()
+    fun loadUsers() {
+        loadUsersJob = viewModelScope.launch(Dispatchers.IO) {
+            while (true) {
+                delay(1000)
+                serverRepository.requestUsers()
+            }
+        }
+    }
+
+    fun logout() {
+        viewModelScope.launch(Dispatchers.IO) {
+            loadUsersJob?.cancel()
+            userStorage.clear()
+            serverRepository.disconnect()
+        }
     }
 }

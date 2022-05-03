@@ -71,6 +71,12 @@ dependencies {
     implementation "io.insert-koin:koin-android:$koin_version"
     // Koin Test features
     testImplementation "io.insert-koin:koin-test:$koin_version"
+
+    def lifecycle_version = "2.5.0-beta01"
+
+    // ViewModel
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
 }
 
 kapt {

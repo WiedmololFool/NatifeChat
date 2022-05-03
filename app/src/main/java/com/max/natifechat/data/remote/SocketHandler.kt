@@ -14,14 +14,14 @@ import java.net.Socket
 
 class SocketHandler(
     private val server: Socket,
-    private val scope: CoroutineScope
+    private val scope: CoroutineScope,
+    private val listener: SocketListener
 ) {
     private lateinit var reader: BufferedReader
     private lateinit var writer: PrintWriter
     private val gson = Gson()
     private var connected = true
     private lateinit var loopJob: Job
-    private lateinit var listener: SocketListener
 
 
     fun send(action: BaseDto.Action, payload: Payload) {
@@ -29,7 +29,7 @@ class SocketHandler(
         writer.flush()
     }
 
-    fun read() {
+    private fun read() {
         try {
             val data = reader.readLine()
             listener.onNewMessage(data)
@@ -48,14 +48,6 @@ class SocketHandler(
                 read()
             }
         }
-    }
-
-    fun getConnectionStatus(): Boolean {
-        return server.isConnected
-    }
-
-    fun setListener(listener: SocketListener) {
-        this.listener = listener
     }
 
     fun disconnect() {
