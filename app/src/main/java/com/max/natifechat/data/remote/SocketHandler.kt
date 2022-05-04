@@ -23,6 +23,9 @@ class SocketHandler(
     private var connected = true
     private lateinit var loopJob: Job
 
+    init {
+        server.soTimeout = 6000
+    }
 
     fun send(action: BaseDto.Action, payload: Payload) {
         writer.println(gson.toJson(BaseDto(action, gson.toJson(payload))))
@@ -33,7 +36,6 @@ class SocketHandler(
         try {
             val data = reader.readLine()
             listener.onNewMessage(data)
-            server.soTimeout = 6000
         } catch (io: IOException) {
             log(io.message.toString())
             if (!io.javaClass.isAssignableFrom(SocketTimeoutException::class.java)) {

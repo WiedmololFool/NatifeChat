@@ -1,6 +1,5 @@
 package com.max.natifechat.data.remote
 
-import android.os.Build
 import android.util.Log
 import com.google.gson.Gson
 import com.max.natifechat.Constants
