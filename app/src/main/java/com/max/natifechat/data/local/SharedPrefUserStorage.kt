@@ -1,21 +1,21 @@
 package com.max.natifechat.data.local
 
 import android.content.Context
+import android.content.SharedPreferences
+import androidx.core.content.edit
 import com.max.natifechat.Constants
 import com.max.natifechat.log
 import model.User
 
 
-class SharedPrefUserStorage(context: Context) : UserStorage {
-
-    private val sharedPreferences = context.getSharedPreferences(
-        Constants.SHARED_PREFS_NAME, Context.MODE_PRIVATE
-    )
+class SharedPrefUserStorage(private val sharedPreferences: SharedPreferences) : UserStorage {
 
     override fun save(user: User): Boolean {
         Constants.apply {
-            sharedPreferences.edit().putString(KEY_USER_ID, user.id).apply()
-            sharedPreferences.edit().putString(KEY_USER_NAME, user.name).apply()
+            sharedPreferences.edit {
+                putString(KEY_USER_ID, user.id).apply()
+                putString(KEY_USER_NAME, user.name).apply()
+            }
             log("Saved user $user")
             return true
         }

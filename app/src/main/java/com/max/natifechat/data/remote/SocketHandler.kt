@@ -1,8 +1,7 @@
 package com.max.natifechat.data.remote
 
-import android.util.Log
 import com.google.gson.Gson
-import com.max.natifechat.Constants
+import com.max.natifechat.log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -11,6 +10,7 @@ import model.BaseDto
 import model.Payload
 import java.io.*
 import java.net.Socket
+import java.net.SocketTimeoutException
 
 class SocketHandler(
     private val server: Socket,
@@ -33,8 +33,12 @@ class SocketHandler(
         try {
             val data = reader.readLine()
             listener.onNewMessage(data)
+            server.soTimeout = 6000
         } catch (io: IOException) {
-            disconnect()
+            log(io.message.toString())
+            if (!io.javaClass.isAssignableFrom(SocketTimeoutException::class.java)) {
+                disconnect()
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -59,6 +63,6 @@ class SocketHandler(
     }
 
     interface SocketListener {
-       fun onNewMessage(message: String)
+        fun onNewMessage(message: String)
     }
 }

@@ -45,7 +45,6 @@ class UsersListFragment : BaseFragment() {
         }
         viewModel.users.observe(viewLifecycleOwner) { users ->
             adapter.submitList(users)
-//            UsersHolder.list = users
             Log.e(Constants.TAG, users.toString())
         }
         viewModel.loadUsers()

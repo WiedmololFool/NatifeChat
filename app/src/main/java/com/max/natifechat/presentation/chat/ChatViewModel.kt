@@ -37,14 +37,13 @@ class ChatViewModel(
 
     private fun loadMessages() {
         viewModelScope.launch {
-            try {
-                serverRepository.getReceivedMessages(receiverId).collect { messageList ->
+            serverRepository.getReceivedMessages(receiverId).collect { messageList ->
+                try {
                     log("MESSAGES IN VIEW MODEL $messageList")
                     _messages.value = messageList
+                } catch (e: Exception) {
+                    log(e.message.toString())
                 }
-
-            } catch (e: Exception) {
-                log(e.message.toString())
             }
         }
     }

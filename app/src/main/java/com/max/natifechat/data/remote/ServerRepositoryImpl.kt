@@ -2,7 +2,6 @@ package com.max.natifechat.data.remote
 
 import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import com.google.gson.Gson
 import com.max.natifechat.Constants
 import com.max.natifechat.DateFormatter
@@ -17,13 +16,13 @@ import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
 import java.net.Socket
-import java.time.LocalDateTime
+import java.util.*
 
 
 class ServerRepositoryImpl : ServerRepository {
 
-    private lateinit var socketHandler: SocketHandler
-    private lateinit var userId: String
+    private var socketHandler: SocketHandler? = null
+    private var userId: String? = null
     private val gson = Gson()
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
     private val isConnected = MutableStateFlow(false)
@@ -67,7 +66,7 @@ class ServerRepositoryImpl : ServerRepository {
                 coroutineScope,
                 createClientListener(username = username)
             )
-            socketHandler.loop()
+            socketHandler?.loop()
         } catch (e: Exception) {
             log(e.message.toString())
         }
@@ -76,7 +75,6 @@ class ServerRepositoryImpl : ServerRepository {
 
     private fun createClientListener(username: String): SocketHandler.SocketListener =
         object : SocketHandler.SocketListener {
-            @RequiresApi(Build.VERSION_CODES.O)
             override fun onNewMessage(message: String) {
                 try {
                     val dto = gson.fromJson(message, BaseDto::class.java)
@@ -105,26 +103,25 @@ class ServerRepositoryImpl : ServerRepository {
     private fun handleConnected(payload: String, username: String) {
         log("handle connected")
         val connectedDto = gson.fromJson(payload, ConnectDto::class.java)
-        userId = connectedDto.id
-        socketHandler.send(BaseDto.Action.CONNECT, ConnectDto(userId, username))
-        log("response Id = $userId")
-        socketHandler.send(BaseDto.Action.PING, PingDto(userId))
-        isConnected.value = true
-        log(isConnected.value.toString())
-
-        coroutineScope.launch(IO) {
-            while (isConnected.value) {
-                delay(5000L)
-                log("send ping")
-                socketHandler.send(BaseDto.Action.PING, PingDto(userId))
-                pingTimeoutJob = this.launch {
-                    log("PING TIMEOUT JOB IS STARTED")
-                    delay(10000L)
-                    log("PING TIMEOUT")
-                    disconnect()
+        userId = connectedDto.id.also { userId ->
+            log("response Id = $userId")
+            socketHandler?.send(BaseDto.Action.CONNECT, ConnectDto(userId, username))
+            socketHandler?.send(BaseDto.Action.PING, PingDto(userId))
+            isConnected.value = true
+            log(isConnected.value.toString())
+            coroutineScope.launch(IO) {
+                while (isConnected.value) {
+                    delay(5000L)
+                    log("send ping")
+                    socketHandler?.send(BaseDto.Action.PING, PingDto(userId))
+                    pingTimeoutJob = this.launch {
+                        log("PING TIMEOUT JOB IS STARTED")
+                        delay(10000L)
+                        log("PING TIMEOUT")
+                        disconnect()
+                    }
                 }
             }
-
         }
     }
 
@@ -139,9 +136,9 @@ class ServerRepositoryImpl : ServerRepository {
         users.value = userReceivedDto.users
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
+
     private fun handleNewMessage(payload: String) {
-        val date = dateFormatter.format(LocalDateTime.now())
+        val date = dateFormatter.format(Date())
         val messageDto = gson.fromJson(payload, MessageDto::class.java)
         val currentReceivedMessages = receivedMessages.value
         receivedMessages.value = currentReceivedMessages + listOf(messageDto)
@@ -187,7 +184,6 @@ class ServerRepositoryImpl : ServerRepository {
         } ?: throw java.lang.IllegalArgumentException("User required")
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun getReceivedMessages(senderId: String): StateFlow<List<Message>> {
         val chat = chats.firstOrNull {
             it.chatId == senderId
@@ -197,17 +193,17 @@ class ServerRepositoryImpl : ServerRepository {
 
 
     override suspend fun requestUsers(): Boolean {
-        socketHandler.send(BaseDto.Action.GET_USERS, GetUsersDto(userId))
+        socketHandler?.send(BaseDto.Action.GET_USERS, GetUsersDto(userId!!))
         return true
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
+
     override suspend fun sendMessage(receiverId: String, message: String) {
-        val date = dateFormatter.format(LocalDateTime.now())
+        val date = dateFormatter.format(Date())
         Log.e(Constants.TAG, "repository send message $message")
-        socketHandler.send(
+        socketHandler?.send(
             BaseDto.Action.SEND_MESSAGE, SendMessageDto(
-                id = userId,
+                id = userId!!,
                 receiver = receiverId,
                 message = message
             )
@@ -227,8 +223,8 @@ class ServerRepositoryImpl : ServerRepository {
     override suspend fun disconnect(): Boolean {
         chats.clear()
         isConnected.value = false
-        socketHandler.apply {
-            send(BaseDto.Action.DISCONNECT, DisconnectDto(userId, 404))
+        socketHandler?.apply {
+            send(BaseDto.Action.DISCONNECT, DisconnectDto(userId!!, 404))
             disconnect()
         }
         log("Disconnect")
@@ -241,7 +237,7 @@ class ServerRepositoryImpl : ServerRepository {
     }
 
     override fun getLoggedUserId(): String {
-        return userId
+        return userId ?: throw java.lang.IllegalArgumentException("userId is required")
     }
 
     data class Chat(val chatId: String, val messages: MutableStateFlow<List<Message>>)
