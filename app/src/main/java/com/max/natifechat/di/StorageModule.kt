@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.max.natifechat.Constants
 import com.max.natifechat.storage.SharedPrefUserStorage
-import com.max.natifechat.storage.UserStorage
+import com.max.natifechat.data.local.UserStorage
 import org.koin.dsl.module
 
 val storageModule = module {

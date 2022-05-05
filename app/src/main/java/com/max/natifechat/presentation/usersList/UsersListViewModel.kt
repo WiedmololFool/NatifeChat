@@ -2,7 +2,7 @@ package com.max.natifechat.presentation.usersList
 
 import androidx.lifecycle.*
 import com.max.natifechat.data.remote.ServerRepository
-import com.max.natifechat.storage.UserStorage
+import com.max.natifechat.data.local.UserStorage
 import kotlinx.coroutines.*
 import model.User
 

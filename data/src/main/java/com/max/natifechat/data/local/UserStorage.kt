@@ -1,4 +1,4 @@
-package com.max.natifechat.storage
+package com.max.natifechat.data.local
 
 import model.User
 
