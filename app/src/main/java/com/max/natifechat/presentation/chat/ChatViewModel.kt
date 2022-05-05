@@ -22,7 +22,6 @@ class ChatViewModel(
 
     init {
         loadMessages()
-
     }
 
     fun sendMessage(message: String) {

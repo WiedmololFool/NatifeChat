@@ -1,6 +1,5 @@
 package com.max.natifechat.data.remote
 
-import android.util.Log
 import com.google.gson.Gson
 import com.max.natifechat.Constants
 import com.max.natifechat.DateFormatter
@@ -18,7 +17,7 @@ import java.net.Socket
 import java.util.*
 
 
-class ServerRepositoryImpl : ServerRepository {
+internal class ServerRepositoryImpl : ServerRepository {
 
     private var socketHandler: SocketHandler? = null
     private var userId: String? = null
@@ -174,7 +173,7 @@ class ServerRepositoryImpl : ServerRepository {
     }
 
     override fun getUsersList(): StateFlow<List<User>> {
-        return users.asStateFlow()
+        return users
     }
 
     override fun getUserById(userId: String): User {
@@ -199,7 +198,7 @@ class ServerRepositoryImpl : ServerRepository {
 
     override suspend fun sendMessage(receiverId: String, message: String) {
         val date = dateFormatter.format(Date())
-        Log.e(Constants.TAG, "repository send message $message")
+        log("repository send message $message")
         socketHandler?.send(
             BaseDto.Action.SEND_MESSAGE, SendMessageDto(
                 id = userId!!,

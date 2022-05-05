@@ -4,10 +4,10 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.max.natifechat.data.local.UserStorage
 import com.max.natifechat.data.remote.ServerRepository
 import com.max.natifechat.log
 import com.max.natifechat.presentation.login.model.ConnectionState
+import com.max.natifechat.storage.UserStorage
 import kotlinx.coroutines.*
 import model.User
 

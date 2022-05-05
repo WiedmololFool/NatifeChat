@@ -1,6 +1,15 @@
 package com.max.natifechat
 
-import android.util.Log
+import java.text.SimpleDateFormat
+import java.util.*
+
+internal class DateFormatter {
+
+    fun format(date: Date): String {
+        return SimpleDateFormat("HH:mm").format(date)
+    }
+
+}
 
 internal fun log(input: String) {
     var retVal = ""
@@ -9,5 +18,5 @@ internal fun log(input: String) {
         val index = trace[3].className.lastIndexOf(".") + 1
         retVal = (trace[3].className.substring(index) + "." + trace[3].methodName + "()")
     }
-    Log.e("${Constants.TAG} $retVal", input)
+    println("${Constants.TAG} $retVal $input")
 }

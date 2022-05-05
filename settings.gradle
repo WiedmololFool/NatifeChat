@@ -8,3 +8,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "NatifeChat"
 include ':app'
+include ':data'

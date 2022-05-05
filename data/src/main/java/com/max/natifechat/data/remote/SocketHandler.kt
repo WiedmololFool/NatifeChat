@@ -12,7 +12,7 @@ import java.io.*
 import java.net.Socket
 import java.net.SocketTimeoutException
 
-class SocketHandler(
+internal class SocketHandler(
     private val server: Socket,
     private val scope: CoroutineScope,
     private val listener: SocketListener
